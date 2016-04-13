@@ -15,7 +15,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.jiang.common.bean.Current;
+import com.jiang.common.bean.GitHubUser;
 import com.jiang.common.util.Logger;
 import com.jiang.common.util.http.JService;
 
@@ -61,6 +61,8 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+
+        Logger.clear();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -112,7 +114,7 @@ public class MainActivity extends AppCompatActivity
         loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(loggingInterceptor)
-                .addNetworkInterceptor(new Interceptor() {
+                .addInterceptor(new Interceptor() {
                     @Override
                     public Response intercept(Chain chain) throws IOException {
                         Request original = chain.request();
@@ -138,31 +140,62 @@ public class MainActivity extends AppCompatActivity
         Retrofit retrofit = new Retrofit.Builder()
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
-                .baseUrl("http://api.openweathermap.org/data/2.5/")
+//                .baseUrl("http://api.openweathermap.org/data/2.5/")
+                .baseUrl("https://api.github.com/")
                 .client(client)
                 .build();
 
         JService jService = retrofit.create(JService.class);
-        Observable<Current> islamabad = jService.getCurrent("Islamabad");
+//        Observable<Current> islamabad = jService.getCurrent("Islamabad");
+//
+//        islamabad.subscribeOn(Schedulers.newThread())
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe(new Observer<Current>() {
+//                    @Override
+//                    public void onCompleted() {
+//                        Logger.d("onCompleted");
+//                    }
+//
+//                    @Override
+//                    public void onError(Throwable e) {
+//                        Logger.e("", e);
+//                    }
+//
+//                    @Override
+//                    public void onNext(Current current) {
+//                        Logger.d("Current Weather" + current.getWeather().get(0).getDescription());
+//                    }
+//                });
 
-        islamabad.subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Observer<Current>() {
+        Observable<GitHubUser> gitHubUserObservable = jService.getGitHubUser("wjjiang917");
+//        gitHubUserObservable.subscribeOn(Schedulers.newThread())
+//                .subscribeOn(AndroidSchedulers.mainThread())
+//                .subscribe(new Observer<GitHubUser>() {
+//                    @Override
+//                    public void onCompleted() {
+//                        Logger.d("onCompleted");
+//                    }
+//
+//                    @Override
+//                    public void onError(Throwable e) {
+//                        Logger.e("", e);
+//                    }
+//
+//                    @Override
+//                    public void onNext(GitHubUser gitHubUser) {
+//                        Logger.d("gitHubUser: " + gitHubUser);
+//                    }
+//                });
+        gitHubUserObservable.subscribeOn(Schedulers.newThread())
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .map(new Func1<GitHubUser, Object>() {
                     @Override
-                    public void onCompleted() {
-
+                    public Object call(GitHubUser gitHubUser) {
+                        Logger.d(gitHubUser.toString());
+                        return null;
                     }
-
-                    @Override
-                    public void onError(Throwable e) {
-
-                    }
-
-                    @Override
-                    public void onNext(Current current) {
-                        Logger.d("Current Weather" + current.getWeather().get(0).getDescription());
-                    }
-                });
+                })
+                .subscribe();
     }
 
     @OnClick(R.id.button)
